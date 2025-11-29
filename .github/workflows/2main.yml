@@ -1,34 +1,27 @@
-name: Node.js CI
+name: Hourly Bot Restart
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-concurrency:
-  group:{{ github.workflow }}-github.ref 
-  cancel-in-progress: true
+  schedule:
+    # සෑම පැයකම (විනාඩි 0 දී) ක්‍රියාත්මක වේ (උදා: 1:00, 2:00, 3:00...)
+    - cron: '0 * * * *'
+  # ඔබට අවශ්‍ය විටෙක Manual Run කිරීමට
+  workflow_dispatch:
 
 jobs:
-  build:
+  restart_server:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [20.x]
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Connect via SSH and Restart Bot
+        uses: appleboy/ssh-action@master
         with:
-          node-version:{{ matrix.node-version }}
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Start application
-        run: npm start
+          host: ${{ secrets.HOST }}          # ඔබේ Server IP එක
+          username: ${{ secrets.USERNAME }}  # ඔබේ Server Username එක (උදා: root)
+          key: ${{ secrets.SSH_KEY }}        # ඔබේ SSH Private Key එක
+          port: 22
+          script: |
+            # ඔබේ Bot එක තිබෙන ෆෝල්ඩරයට යන්න (මෙම path එක ඔබේ server එකට ගැලපෙන ලෙස වෙනස් කරන්න)
+            cd /root/ASITHA-MD-V5/abc-main
+            
+            # PM2 මගින් Bot එක Restart කරන්න
+            npm restart
