@@ -1,28 +1,31 @@
-name: Hourly Bot Restart
+name: Node.js CI/CD Workflow
 
 on:
-  schedule:
-    # සෑම පැයකම (විනාඩි 0 දී) ක්‍රියාත්මක වේ
-    - cron: '0 * * * *'
-  # ඔබට අවශ්‍ය විටෙක Manual Run කිරීමට
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  restart_server:
+  build:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        node-version: [20.x]
+        
     steps:
-      - name: Connect via SSH and Restart Bot
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          script: |
-            # ඔබේ Bot ෆෝල්ඩරයේ path එක නිවැරදි දැයි තහවුරු කරගන්න
-            cd /root/ASITHA-MD-V5/abc-main
-            
-            # PM2 මගින් Bot එක Restart කරන්න
-            npm restart
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Start application
+      run: npm start
